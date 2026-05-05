@@ -252,11 +252,20 @@ function generateResponse(text, context) {
     '我不管你信不信，今天告诉你一个真相——「'+userQuote+'」这件事，大概率不是你的问题。',
     '好多人在问，我有'+topic.name+'的问题，怎么解决？今天我就教大家一个关键点。',
     '千万不要去随便处理'+topic.name+'这件事，因为你只看到一个片段就想出手，往往要承担别人的因果。',
+    '今天这个案例，会告诉你什么是「命运的重复」。「'+userQuote+'」——你以为是你的问题？不是。',
+    '我做这行二十年，见过一万多个家庭。「'+userQuote+'」这种事儿，我闭着眼都知道背后藏着什么。',
+    '你先别急着下结论。「'+userQuote+'」——我先给你讲个事儿，讲完你自己判断。',
+    '有些话我不说不行。「'+userQuote+'」——你去看看你爸妈，看看你爷爷奶奶，有没有一模一样的情况？',
+    '「'+userQuote+'」——你信不信，你身上这个事儿，可能在你出生之前就已经注定了。',
+    '我在咨询室里听过太多人说「'+userQuote+'」。每次听到，我心里都一紧。因为我知道，这事儿没那么简单。',
+    '「'+userQuote+'」——这句话我太熟了。来找我的人，十个有八个第一句就是这个。但真相，跟你想的完全不一样。',
+    '今天我要说的这个事儿，可能会颠覆你的认知。「'+userQuote+'」——背后的原因，你做梦都想不到。',
   ];
-  // 如果有 hook_hint，追加一个基于感官细节的开场
+  // 如果有 hook_hint，追加基于感官细节的开场
   if (hookHint && d.sensory && d.sensory.length) {
     openers.push('你敢相信吗？'+d.sensory[0]+'。这不是个案，是很多家庭的缩影。');
     openers.push('我不管你信不信，今天告诉你一个真相——'+hookHint+'。');
+    openers.push(d.sensory[0]+'。你可能觉得这是个例，但我告诉你，这背后有一整个家族的秘密。');
   }
   parts.push(pick(openers));
 
@@ -269,6 +278,11 @@ function generateResponse(text, context) {
     '大部分'+topic.name+'的人其实都是内在有不知道的牵挂——牵挂着一些人，牵挂的一些事。',
     '几代之前长辈们打了一张牌，四到五代之后这张牌才落下来，基因的承接者都要承担后果的。',
     '我见过太多家庭因为'+topic.name+'的事情搞得鸡飞狗跳，最后发现根源根本不在当事人身上。',
+    '99%的人处理'+topic.name+'的方式都是错的。因为他们在治标，根本没触到根。',
+    '你知道为什么你试了那么多方法都没用吗？因为'+topic.name+'的根源不在你身上，在你的家族里。',
+    '很多人以为'+topic.name+'是性格问题，是心态问题。我告诉你，都不是。是数据问题。',
+    '我研究家族系统疗愈二十年，发现一个规律：'+topic.name+'这件事，从来不是一个人的事。',
+    '你现在经历的'+topic.name+'，很可能是你的祖先在几十年前种下的因。不是玄学，这是科学。',
   ];
   // 避免开场和钩子撞车：如果开场已经包含了类似内容，换一个
   let hook = pick(hooks);
@@ -288,6 +302,11 @@ function generateResponse(text, context) {
     '我来讲一个我印象特别深的案例。',
     '曾经有一位来访者从外地而来。',
     '这是一个非常震撼的故事。',
+    '我跟你讲一个我亲身经历的案例。',
+    '去年有个学员，她的故事让我到现在都忘不了。',
+    '我给你讲个事儿，你听完就明白了。',
+    '前两天刚来了一个学员，她的情况跟你说的几乎一模一样。',
+    '我印象特别深的一个案例——听完你就知道为什么了。',
   ];
   if (!lastPart.includes('案例') && !lastPart.includes('故事')) {
     parts.push(pick(caseIntros));
@@ -299,10 +318,16 @@ function generateResponse(text, context) {
   if (d.sensory && d.sensory.length) {
     sensoryHint = ' '+d.sensory[0]+'。';
   }
+  var sensoryHint2 = '';
+  if (d.sensory && d.sensory.length > 1) {
+    sensoryHint2 = ' '+d.sensory[1]+'。';
+  }
   parts.push(pick([
     '有一个'+p.g+'的，'+d.city+'的，'+p.j+'，'+age+'。'+d.sx.join('，')+'。'+sensoryHint+sub+'来找我的时候，很崩溃。'+sub+'跟我说：老师我真的没办法了，能试的都试了，就是没用。我问'+sub+'多久了，'+sub+'说好几年了，什么方法都试过，就是没用。',
     '曾经有一位'+p.g+'性来访者从'+d.city+'而来。'+age+'，'+p.j+'。'+sub+'来的时候就是因为'+d.sx[0]+'。'+(d.sx.length>1?d.sx.slice(1).join('，')+'。':'')+sensoryHint+'我问'+sub+'多久了，'+sub+'说好几年了，什么方法都试过，就是没用。整个人看上去特别疲惫。',
     '我有一个学员，'+d.city+'的，'+p.j+'，'+age+'。'+d.sx.join('，')+'。'+sensoryHint+sub+'来找我的时候说：老师我真的没办法了。'+sub+'来的时候整个人都蔫了，家里人都觉得'+sub+'有问题，但'+sub+'自己知道那个不对劲是从骨头里来的。',
+    sub+'，'+d.city+'人，'+p.j+'，'+age+'。'+d.sx.join('，')+'。'+sensoryHint+sub+'坐在我对面的时候，你能感觉到那种疲惫——不是身体累，是心累。'+sub+'说：老师，我试过所有办法了。吃药、看书、运动，全没用。',
+    '我记得很清楚，那天'+sub+'推门进来的时候，'+sensoryHint2+sub+'是'+d.city+'的，'+p.j+'，'+age+'。'+d.sx.join('，')+'。'+sub+'跟我说的第一句话就是：老师，我觉得我不是我自己了。',
   ]));
 
   // ===== 第4步：转折 —— 引出祖先故事 =====
@@ -312,6 +337,9 @@ function generateResponse(text, context) {
     '然后呢，我就问'+sub+'，你上一代呢？'+sub+'沉默了很久，眼眶红了。然后说：'+d.an.who+'，'+d.an.what+'。\n\n你想，'+poss+cleanWho(d.an.who)+'，'+emo+'，这些情绪去哪里了？不会消失的。遗忘不代表已经疗愈了，而是走出了时间之外，进入了潜意识。凡是我们的祖先长辈压在潜意识里面，重大的创伤，重大的情绪，没有表达的就会压到他的后代身上。',
     '我就继续问'+poss+'家族史，我说那你上一代呢？\n\n原来'+d.an.who+'，'+d.an.what+'。'+emo+'。我听完以后心里特别沉重。\n\n'+poss+cleanWho(d.an.who)+'，带着这么大的创伤过了一辈子，这些情绪会去哪里？不会消失的。它会进入潜意识数据库，一代一代传下去。',
     sub+'跟我说了一件事，我听完以后特别震撼。\n\n'+sub+'说：'+d.an.who+'，'+d.an.what+'。'+emo+'。\n\n我当时就明白了——这就是代际传承的源头。'+poss+cleanWho(d.an.who)+'，把没有处理的创伤传给了下一代。你知道吗？'+emo+'，一辈子放不下这件事，这些情绪全部传给了后代。',
+    '我问'+sub+'：你家里还有什么事是你不知道的？\n\n'+sub+'想了很久，突然说：'+d.an.who+'，'+d.an.what+'。\n\n我一听就明白了。'+emo+'。这些情绪不会凭空消失，它们会像种子一样，一代一代种下去。',
+    '后来我深入问了'+poss+'家族史。\n\n你知道吗？'+d.an.who+'，'+d.an.what+'。'+emo+'。\n\n我当时坐在那里，心里特别沉重。因为我知道，这不是一个人的事，这是一整个家族的数据在运转。',
+    sub+'说着说着就哭了。\n\n'+sub+'说：'+d.an.who+'，'+d.an.what+'。\n\n'+emo+'。你能想象吗？一个人带着这么大的创伤过了一辈子，这些情绪全部压在了潜意识里面，然后传给了下一代。',
   ]));
 
   // ===== 第5步：揭示代际链条 =====
@@ -320,6 +348,10 @@ function generateResponse(text, context) {
     '几代之前长辈们打了一张牌，四到五代之后，这张牌才落下来，基因的承接者都要承担后果的。我们这个世界是一个整体，每个人发出的力量都在影响着自己，也在影响着周围的人。',
     '父母是因，孩子是果，你让果来解决因的事解决不了的。你以为是自己的问题，其实是上一代的问题。',
     '人的感情也是一种储蓄，每次你这样做的时候看似没改变，是因为量变引起质变。等量到一定程度，关系就完了。',
+    '这就是代际传承。不是你记得，是你的身体记得。不是你害怕，是你的祖先的恐惧借你的身体在害怕。',
+    '你看到了吗？这就是家族的数据。每一代人都以为是自己的问题，其实都是在替上一代承担。',
+    '表面上看是一个人的问题，实际上是一整个家族的模式在循环。如果你不觉知，这个循环就会一直继续下去。',
+    '这就是因果。不是玄学，这是科学。这是研究家族系统、研究家庭疗愈的人这100年来都很具体了。',
   ]));
 
   // ===== 第6步：回到用户的处境 =====
@@ -328,6 +360,10 @@ function generateResponse(text, context) {
     '你想想，你跟这个案例像不像？你身上发生的事，跟上一代、上上一代有没有关系？',
     '回到你身上——你现在经历的'+topic.name+'，你去问问你的父母、你的爷爷奶奶，他们有没有类似的经历？',
     '现在你再回头看你自己——你有没有想过，你现在的这些感受，可能在你之前就有人经历过？',
+    '你品品，你跟这个案例有多像？你身上发生的事，是不是也在你爸妈身上发生过？',
+    '我把话放在这儿——你回去问你爸妈，问你爷爷奶奶，他们身上一定有类似的情况。只是没人说出来而已。',
+    '你看完这个案例，再回头看看自己。你有没有发现，你的人生轨迹，跟上一代惊人地相似？',
+    '所以你现在知道了吧？你经历的这些，不是你一个人的问题。你的背后站着一整个家族。',
   ]));
 
   // ===== 第7步：揭示（融合 micro_insights） =====
@@ -362,6 +398,9 @@ function generateResponse(text, context) {
     '怎么做呢？你要回到那个画面，看看是谁把这个数据传给你的，然后在那个画面里面充分地表达出来——恐惧、愤怒、委屈、悲伤，全部表达出来。'+d.ac+'。这个过程不轻松，但当你做到了，一切都变了。',
     '你要做的就是：回到那个画面，充分地表达情绪。'+d.ac+'。当过去的委屈被看见，当下的生命自然丰盛。潜意识疗愈补的不是财库的洞，是家族能量的断层。',
     '击穿了这个数据，你的状态才会真正改变。不是靠意志力去改变行为，是从潜意识层面去疗愈根源。'+d.ac+'。用内化的方法解决外在的现象，工具背后是心性。',
+    '第一步：先意识到这个数据的存在。第二步：回到那个画面，充分表达被压抑的情绪。'+d.ac+'。当你在那个画面里完成了表达，你身上的数据就开始变了。',
+    '疗愈的关键不是「想通了」，是「回到了」。回到那个画面，看看是谁把这个数据传给你的。'+d.ac+'。这个过程需要勇气，但你不是一个人在战斗。',
+    '你要做的很简单，也很不简单——回到源头，表达那些从来没有被表达过的情绪。'+d.ac+'。当你做到了，你会发现，你身上那些莫名其妙的症状，自己就消了。',
   ]));
 
   // ===== 第9步：结果 =====
@@ -369,10 +408,15 @@ function generateResponse(text, context) {
     '击穿了数据回去，'+d.rs+'。'+d.rs2,
     '你知道'+sub+'得到的结果吗？'+d.rs+'。'+d.rs2,
     '然后呢，'+d.rs+'。'+d.rs2,
+    '你猜怎么着？'+d.rs+'。'+d.rs2,
+    '后来'+sub+'再来找我的时候，'+d.rs+'。'+d.rs2,
   ])+'\n\n'+pick([
     sub+'跟我说的时候声音是带着笑的，你能感觉到那种轻盈——不是装出来的，是真的卸下了一座山。当我们疗愈了来自过去的伤痛，就为整个家族，改写了关于幸福的剧本。',
     '这就是击穿数据的力量。先意识到自己的创伤，再慢慢斩断与原生家庭的共生，那你就会真正的实现觉醒。',
     '当我们疗愈了来自过去的伤痛，就为整个家族，改写了关于幸福的剧本。记住，孩子的成长没有绝境，找对方法，就能把弯路走直。',
+    '你看到了吗？当数据被击穿，一切就开始变了。不是玄学，是你的身体、你的潜意识在重新编程。',
+    sub+'整个人都变了。不是装出来的那种变，是从骨子里透出来的轻松。'+sub+'说：老师，我终于知道那不是我的了。',
+    '这就是疗愈的力量。当你回到源头，把那些压了几代人的情绪释放出来，整个家族的剧本就改写了。',
   ]));
 
   // ===== 第10步：收尾 =====
@@ -465,47 +509,101 @@ function buildSystemPrompt(topic) {
     ? "🎭 不含故事版。用金句排比型或观点共鸣型。"
     : "🎭 含故事版。必须包含：来访者案例+祖先故事+揭示+收尾。";
 
-  // ===== 叙事技法指引（注入prompt开头） =====
-  const narrativeGuide = "\n🎬 叙事技法要求：\n\n" +
-  "【过渡】案例段落之间必须有自然过渡，不能硬切。用以下方式：\n" +
-  "- 症状→祖先：用追问式过渡（\"后来我问他的XX\"、\"我一问才知道\"、\"我继续追\"）\n" +
-  "- 铺垫→揭示：用递进对话（\"XX呢？{回答}。那再上一代呢？{回答}。\"）\n" +
-  "- 故事→洞察：用揭示句（\"揭示就在这儿\"、\"原来是这样\"、\"你看到了吗\"）\n" +
-  "⚠️ 以上过渡方式只是参考示例，禁止每次都用同一句，必须在不同案例之间轮换使用不同的过渡句式。\n\n" +
+  const nt = NARRATIVE_TECHNIQUES;
+  const pick = function(arr) { return arr[Math.floor(Math.random() * arr.length)]; };
+
+  // ===== 🎲 随机脚本框架（每次不同结构） =====
+  const frameworks = [
+    {
+      name: "悬念钩手型",
+      structure: "悬念开场 → 案例铺垫 → 祖先追问 → 代际揭示 → 疗愈转折 → 金句收尾",
+      desc: "用强悬念钩住观众，3秒内不给答案。案例用「你知道吗」推进，揭示用「原来是这样」引爆。",
+      ratio: "钩子10% / 案例50% / 揭示25% / 收尾15%"
+    },
+    {
+      name: "痛点共鸣型",
+      structure: "痛点直击 → 共情深化 → 案例对照 → 根源追溯 → 认知颠覆 → 行动指引",
+      desc: "开场直接戳痛点，让观众觉得「说的就是我」。用案例证明不是个例，用根源追溯颠覆认知。",
+      ratio: "痛点15% / 共情15% / 案例40% / 根源20% / 行动10%"
+    },
+    {
+      name: "反常识颠覆型",
+      structure: "反常识观点 → 质疑铺垫 → 案例佐证 → 真相揭示 → 逻辑闭环 → 深度收尾",
+      desc: "开场抛出违反直觉的观点，制造认知冲突。观众因为「不信」而留下来看完。案例就是证据。",
+      ratio: "反常识15% / 质疑10% / 案例45% / 真相20% / 收尾10%"
+    },
+    {
+      name: "故事驱动型",
+      structure: "人物出场 → 细节沉浸 → 冲突升级 → 转折揭示 → 情感爆发 → 余韵收尾",
+      desc: "以一个来访者的故事为主线，像讲故事电影一样展开。重点在沉浸感和情感张力。",
+      ratio: "出场10% / 沉浸35% / 冲突20% / 揭示25% / 收尾10%"
+    },
+    {
+      name: "对话还原型",
+      structure: "场景还原 → 对话推进 → 追问深入 → 沉默时刻 → 真相浮现 → 点到即止",
+      desc: "还原咨询室的真实对话场景，用「他说……我说……」推进。重点在对话的真实感和节奏感。",
+      ratio: "场景10% / 对话50% / 追问20% / 真相15% / 收尾5%"
+    },
+    {
+      name: "层层剥笋型",
+      structure: "表象呈现 → 第一层剥开 → 第二层剥开 → 核心真相 → 全局视角 → 升华收尾",
+      desc: "像剥洋葱一样层层深入，每剥一层都给观众一个「原来如此」。适合复杂家族故事。",
+      ratio: "表象10% / 第一层25% / 第二层25% / 核心25% / 收尾15%"
+    }
+  ];
+  const framework = pick(frameworks);
+
+  // ===== 🎭 随机叙事风格（每次不同语气） =====
+  const narrativeStyles = [
+    { name: "温和共情型", desc: "语气温和，像朋友聊天。多用「你有没有想过」「其实很多时候」。情感共鸣优先。" },
+    { name: "犀利点醒型", desc: "语气直接，一针见血。多用「你醒醒吧」「别再骗自己了」。冲击力优先。" },
+    { name: "平静叙述型", desc: "语气平静克制，用事实说话。不煽情，但细节足够震撼。真实感优先。" },
+    { name: "情绪起伏型", desc: "情绪有高低起伏，从平静到激动再到平静。像坐过山车。节奏感优先。" },
+    { name: "碎碎念型", desc: "口语化极强，句子碎短断。像邻居大姐在跟你唠嗑。亲切感优先。" }
+  ];
+  const narStyle = pick(narrativeStyles);
+
+  // ===== 📐 叙事技法指引（动态组合） =====
+  var narrativeGuide = "\n🎬 叙事技法要求：\n\n" +
+  "【本次框架】" + framework.name + "\n" +
+  "结构：" + framework.structure + "\n" +
+  "要领：" + framework.desc + "\n" +
+  "篇幅分配：" + framework.ratio + "\n\n" +
+  "【本次语气】" + narStyle.name + "\n" +
+  narStyle.desc + "\n\n" +
+  "【过渡】案例段落之间必须有自然过渡，不能硬切。随机使用以下方式之一：\n" +
+  "- 追问式（\"后来我问他的XX\"、\"我一问才知道\"、\"我继续追\"）\n" +
+  "- 递进对话（\"XX呢？{回答}。那再上一代呢？\"）\n" +
+  "- 揭示句（\"原来是这样\"、\"你看到了吗\"、\"我就明白了\"）\n" +
+  "- 沉默留白（\"他沉默了很久\"、\"眼眶红了\"、\"半天没说话\"）\n" +
+  "⚠️ 禁止每次都用同一句过渡，必须轮换。\n\n" +
   "【感官细节】每个场景必须有1-2个感官细节（视觉/听觉/触觉），让观众\"看到\"画面。\n" +
   "- 不说\"他很难受\"，说\"牙齿都是洞，甜就好\"\n" +
   "- 不说\"家里气氛差\"，说\"饭桌上筷子不敢响\"\n" +
   "- 不说\"她很痛苦\"，说\"眼泪掉下来但一声不吭\"\n\n" +
-  "【情绪节奏】按以下节奏控制叙述：\n" +
-  "- 开头：慢铺垫（情绪3-4）\n" +
-  "- 症状展开：中速（情绪5-6）\n" +
-  "- 祖先揭示：慢+停顿（情绪8-9）\n" +
-  "- 金句收尾：最慢（情绪9-10）\n\n" +
   "【碎句技法】关键冲击画面用碎句，模拟真实说话：\n" +
   "- \"牙齿都是洞，甜就好\"\n" +
   "- \"一个浪过来，妹妹就没了\"\n" +
   "- \"安眠药一把一把吃，给小孩儿都吃着\"\n\n";
 
-  // ===== 从 NARRATIVE_TECHNIQUES 中随机选几个模板注入 =====
-  const nt = NARRATIVE_TECHNIQUES;
-  const pick = function(arr) { return arr[Math.floor(Math.random() * arr.length)]; };
-  let techInject = "📚 叙事技法参考（随机选取）：\n\n";
+  // ===== 📚 随机叙事技法注入 =====
+  var techInject = "📚 叙事技法参考（随机选取）：\n\n";
 
   // 随机选1-2个过渡模板
-  const transTypes = Object.keys(nt.transitions);
-  const selTransType = pick(transTypes);
+  var transTypes = Object.keys(nt.transitions);
+  var selTransType = pick(transTypes);
   techInject += "【过渡模板·"+selTransType+"】\n";
   nt.transitions[selTransType].forEach(function(t) { techInject += "• "+t+"\n"; });
 
   // 随机选1个感官模板
-  const sensoryTypes = Object.keys(nt.sensory);
-  const selSensoryType = pick(sensoryTypes);
+  var sensoryTypes = Object.keys(nt.sensory);
+  var selSensoryType = pick(sensoryTypes);
   techInject += "\n【感官模板·"+selSensoryType+"】\n";
   nt.sensory[selSensoryType].forEach(function(s) { techInject += "• "+s+"\n"; });
 
   // 随机选2个钩子模板
   techInject += "\n【开头钩子参考·仅供风格学习】\n";
-  for (let hi = 0; hi < 2; hi++) { techInject += "• "+pick(nt.hooks)+"\n"; }
+  for (var hi = 0; hi < 2; hi++) { techInject += "• "+pick(nt.hooks)+"\n"; }
   techInject += "⚠️ 以上仅供学习风格和节奏，禁止照抄原文，必须自己写一个全新的原创开场。\n";
 
   // 随机选1个结尾模板
@@ -513,27 +611,27 @@ function buildSystemPrompt(topic) {
   techInject += "⚠️ 以上仅供学习风格和语气，禁止照抄原文，必须自己写一个全新的原创收尾。\n";
 
   // 随机选3个口语标记词
-  const shuffled = nt.oral_markers.slice().sort(function() { return Math.random() - 0.5; });
+  var shuffled = nt.oral_markers.slice().sort(function() { return Math.random() - 0.5; });
   techInject += "\n【口语标记词】"+shuffled.slice(0,3).join("、")+"\n\n";
 
-  // ===== 动态注入案例库（精简版：只注入 2 个案例） =====
-  let caseLib = "\n\n📦 案例库：\n";
-  const topicKey = topic ? getDNAKey(topic.name) : null;
+  // ===== 📦 动态注入案例库（3-4个案例，轮询） =====
+  var caseLib = "\n\n📦 案例库：\n";
+  var topicKey = topic ? getDNAKey(topic.name) : null;
   if (topicKey && CASES_DNA[topicKey]) {
-    const cases = CASES_DNA[topicKey];
-    // 只取 2 个案例（轮询选取，避免重复）
-    const MAX_CASES = 2;
+    var cases = CASES_DNA[topicKey];
+    var MAX_CASES = Math.min(4, cases.length); // 最多4个，但不超过总数
+    if (MAX_CASES < 3) MAX_CASES = Math.min(3, cases.length); // 至少3个
     if (!lastDNAIdx[topicKey] || lastDNAIdx[topicKey] >= cases.length) lastDNAIdx[topicKey] = 0;
-    const selected = [];
-    for (let ci = 0; ci < MAX_CASES && ci < cases.length; ci++) {
-      const idx = (lastDNAIdx[topicKey] + ci) % cases.length;
+    var selected = [];
+    for (var ci = 0; ci < MAX_CASES && ci < cases.length; ci++) {
+      var idx = (lastDNAIdx[topicKey] + ci) % cases.length;
       selected.push(cases[idx]);
     }
     lastDNAIdx[topicKey] = (lastDNAIdx[topicKey] + MAX_CASES) % cases.length;
 
     caseLib += "\n━━━ 【"+topic.name+"】"+selected.length+"个案例 ━━━\n";
     selected.forEach(function(c, i) {
-      const age = String(c.p.a).match(/^\d/) ? c.p.a+'岁' : c.p.a;
+      var age = String(c.p.a).match(/^\d/) ? c.p.a+'岁' : c.p.a;
       caseLib += "\n【案例"+(i+1)+"】"+c.city+" · "+c.p.g+" · "+age+" · "+c.p.j+"\n";
       caseLib += "症状："+c.sx.join("；")+"\n";
       caseLib += "祖先："+c.an.who+"——"+c.an.what+"（"+c.an.emo+"）\n";
@@ -554,34 +652,72 @@ function buildSystemPrompt(topic) {
       if (c.micro_insights && c.micro_insights.length) caseLib += "金句方向："+c.micro_insights.join("；")+"\n";
     });
   }
-  // 移除"风格参考"案例（节省 tokens，AI 从当前话题案例中学习风格即可）
 
-  let phraseBank = "\n📚 语料库：\n\n";
-  const phraseKeys = Object.keys(PHRASES);
-  // 只选 1 组语料（按话题相关性）
-  const selKeys = [phraseKeys[0]]; // 只用第1组开场库
+  // ===== 🎨 随机风格示例（每次只注入1个，而非全部3个） =====
+  var styleKeys = Object.keys(STYLE_EXAMPLES);
+  var selStyleKey = pick(styleKeys);
+  var styleNames = { jujube: "金句排比型", story: "案例故事型", resonance: "观点共鸣型" };
+  var styleExampleInject = "\n【本次参考风格·" + (styleNames[selStyleKey]||selStyleKey) + "】\n" +
+    STYLE_EXAMPLES[selStyleKey] + "\n" +
+    "⚠️ 以上仅供学习风格和节奏，禁止照抄，必须原创。\n";
 
-  return "你现在就是卢慧老师本人。你在拍短视频口播。\n\n" +
+  // ===== 📝 随机语料注入（每次随机选1-2组） =====
+  var phraseBank = "\n📚 语料库：\n\n";
+  var phraseKeys = Object.keys(PHRASES);
+  var shuffledPhraseKeys = phraseKeys.slice().sort(function() { return Math.random() - 0.5; });
+  var selPhraseKeys = shuffledPhraseKeys.slice(0, 2);
+  selPhraseKeys.forEach(function(key) {
+    phraseBank += "【" + key + "】\n";
+    var items = PHRASES[key];
+    var shuffledItems = items.slice().sort(function() { return Math.random() - 0.5; });
+    shuffledItems.slice(0, 5).forEach(function(item) { phraseBank += "• " + item + "\n"; });
+    phraseBank += "\n";
+  });
+
+  // ===== 🚨 动态指令集（从指令池随机选 + 核心指令常驻） =====
+  var coreRules = [
+    "整个输出是一整块连续文字，中间不能有空行",
+    "口语碎碎念，句子碎短断。高频使用：然后呢、你看看、你知道吗、结果呢",
+    "收尾说一句就停，不要画蛇添足",
+    "每200字至少3个呼吸点（短句、停顿、反问）"
+  ];
+  var extraRules = [
+    "不用「什么是XX」开场，从「制造好奇缺口」或「痛点直击」开始",
+    "祖先故事必须「铺垫→展开→揭示」三步走，不能一步到位",
+    "细节密度拉满，每个场景3-5句话，必须有感官细节",
+    "「揭示就在这儿」这种揭示句式整篇只能用一次，其他揭示必须换不同说法",
+    "「那再上一代呢」这种追问句式每个案例最多用一次，其他追问换不同问法",
+    "每篇脚本的开场、收尾、过渡句式必须跟上次不同",
+    "禁止用排比整齐的句式，要参差不齐、口语化",
+    "禁止说教和替观众总结，让观众自己悟",
+    "禁止连续三句以上的总结性发言",
+    "禁止使用学术术语，全部用大白话",
+    "金句必须扎心，不能是鸡汤",
+    "案例中的人物要有名字或代号，不要总说「有一个人」",
+    "对话还原要真实，不要书面化",
+    "情绪转折要有铺垫，不能突然变脸",
+    "开场3秒内必须制造好奇或共鸣，否则观众划走"
+  ];
+  // 核心指令常驻，额外指令随机选5-7条
+  var shuffledExtra = extraRules.slice().sort(function() { return Math.random() - 0.5; });
+  var selectedExtra = shuffledExtra.slice(0, 5 + Math.floor(Math.random() * 3));
+  var allRules = coreRules.concat(selectedExtra);
+  var rulesText = "🚨 核心规则：\n";
+  allRules.forEach(function(r, i) { rulesText += (i+1) + ". " + r + "。\n"; });
+
+  // ===== ⏰ 随机扰动（时间戳 + 随机种子） =====
+  var seed = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+
+  // ===== 🎯 最终组装 =====
+  return "你现在就是卢慧老师本人。你在拍短视频口播。这是第 " + seed + " 次生成，必须与之前的任何一次都不同。\n\n" +
   narrativeGuide +
   techInject +
-  "🚨 最高指令：\n" +
-  "1. 整个输出是一整块连续文字，中间不能有空行。\n" +
-  "2. 不用「什么是XX」开场，从「制造好奇缺口」开始。\n" +
-  "3. 祖先故事必须「铺垫→展开→揭示」三步走。\n" +
-  "4. 细节密度拉满，每个场景3-5句话。\n" +
-  "5. 口语碎碎念，句子碎短断。高频：然后呢、你看看、你知道吗。\n" +
-  "6. 收尾说一句就停。\n" +
-  "7. 每200字至少3个呼吸点。\n" +
-  "8. 「揭示就在这儿」这种揭示句式整篇只能用一次，其他揭示必须换不同的说法。\n" +
-  "9. 「那再上一代呢」这种追问句式每个案例最多用一次，其他追问必须换不同的问法。\n" +
-  "10. 每篇脚本的开场、收尾、过渡句式必须跟上次不同，不能用同一套模板。\n\n" +
-  "🎯 60-70%讲故事，20-30%揭示，10%金句收尾。\n\n" +
-  "🎬 口播脚本，用嘴说不是用笔写。\n\n" +
-  "【金句排比型】" + STYLE_EXAMPLES.jujube + "\n\n" +
-  "【案例故事型】" + STYLE_EXAMPLES.story + "\n\n" +
-  "【观点共鸣型】" + STYLE_EXAMPLES.resonance + "\n\n" +
+  rulesText + "\n" +
+  "🎯 篇幅分配：" + framework.ratio + "\n\n" +
+  "🎬 口播脚本，用嘴说不是用笔写。像跟朋友聊天一样自然。\n\n" +
+  styleExampleInject + "\n" +
   "🗣️ 句子碎短断；口语标记高频；同一意思换着说；第一人称。\n\n" +
-  "⚠️ 严禁：排比整齐 / 说教 / 替观众总结 / 连续三句总结 / 学术术语\n\n" +
+  "⚠️ 严禁：排比整齐 / 说教 / 替观众总结 / 连续三句总结 / 学术术语 / 照搬模板\n\n" +
   caseLib + "\n" + phraseBank + "\n" +
   lengthHint + "\n" + styleHint + "\n" + topicHint;
 }
@@ -1438,7 +1574,10 @@ async function sendMessage() {
         { role: 'system', content: buildSystemPrompt(topic) },
         ...contextMessages
       ],
-      temperature: 0.6,
+      temperature: 0.88,
+      top_p: 0.92,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.4,
       max_tokens: maxTokens,
       stream: true,
     };
