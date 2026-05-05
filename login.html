@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#06060f">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'">
+<title>登录 · 心理学博士卢慧 AI 智能体</title>
+<style>
+  :root{
+    --bg:#06060f;
+    --glass:rgba(255,255,255,.04);
+    --glass2:rgba(255,255,255,.06);
+    --glass-border:rgba(255,255,255,.08);
+    --glass-border2:rgba(255,255,255,.12);
+    --text:#e8e8f0;
+    --text-secondary:rgba(232,232,240,.55);
+    --text-tertiary:rgba(232,232,240,.45);
+    --accent:#7c5cfc;
+    --accent2:#a78bfa;
+    --accent-hover:#9b7eff;
+    --accent-soft:rgba(124,92,252,.12);
+    --red:#f87171;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC','Helvetica Neue',system-ui,sans-serif;
+    --radius-sm:10px;
+    --radius-md:14px;
+    --radius-lg:20px;
+    --radius-xl:28px;
+    --blur:blur(24px) saturate(160%);
+    --spring-bouncy:cubic-bezier(.175,.885,.32,1.275);
+    --ease-out:cubic-bezier(.16,1,.3,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--text);font-family:var(--font);
+    font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    display:flex;align-items:center;justify-content:center;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(ellipse 60% 50% at 15% 20%,rgba(124,92,252,.15) 0%,transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 75%,rgba(244,114,182,.1) 0%,transparent 70%),
+      radial-gradient(ellipse 70% 40% at 50% 50%,rgba(34,211,238,.06) 0%,transparent 60%);
+    animation:bgShift 20s ease-in-out infinite alternate;
+  }
+  @keyframes bgShift{0%{opacity:1;filter:hue-rotate(0deg)}50%{opacity:.8;filter:hue-rotate(15deg)}100%{opacity:1;filter:hue-rotate(-10deg)}}
+  @media(prefers-reduced-motion:reduce){body::before{animation:none!important;opacity:1!important}}
+
+  .login-card{
+    position:relative;z-index:1;
+    width:90%;max-width:420px;
+    background:linear-gradient(135deg,rgba(14,14,28,.85) 0%,rgba(20,20,40,.7) 100%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    padding:40px 36px 36px;
+    box-shadow:0 24px 80px rgba(0,0,0,.4),0 0 60px rgba(124,92,252,.06);
+    animation:cardIn .6s var(--spring-bouncy);
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .login-card.shake{animation:shake .45s var(--ease-out)}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+  .brand-logo{width:72px;height:72px;margin:0 auto 20px;display:block;filter:drop-shadow(0 0 20px rgba(124,92,252,.25))}
+  .brand-ring{position:absolute;inset:-6px;border:1.5px solid var(--glass-border);border-radius:50%;animation:brandSpin 25s linear infinite}
+  .brand-ring::before{content:'';position:absolute;top:-3px;left:50%;width:5px;height:5px;background:var(--accent2);border-radius:50%;transform:translateX(-50%);box-shadow:0 0 10px rgba(167,139,250,.6)}
+  @keyframes brandSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .brand-wrap{position:relative;width:72px;height:72px;margin:0 auto 20px}
+
+  .login-title{
+    text-align:center;font-size:22px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px;
+    background:linear-gradient(135deg,#c4b5fd 0%,#a78bfa 40%,#f9a8d4 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .login-subtitle{text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:28px}
+
+  .input-group{margin-bottom:20px}
+  .input-group input{
+    width:100%;background:var(--glass);border:1px solid var(--glass-border);
+    border-radius:var(--radius-xl);padding:14px 20px;color:var(--text);font-size:15px;
+    font-family:var(--font);outline:none;transition:all .25s var(--ease-out);
+    -webkit-appearance:none;
+  }
+  .input-group input::placeholder{color:var(--text-tertiary)}
+  .input-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),0 0 30px rgba(124,92,252,.08);background:var(--glass2)}
+
+  .login-btn{
+    width:100%;background:linear-gradient(135deg,var(--accent) 0%,#9b7eff 100%);
+    border:none;color:#fff;padding:14px;border-radius:var(--radius-xl);
+    font-size:15px;font-weight:600;font-family:var(--font);cursor:pointer;
+    transition:all .25s var(--ease-out);position:relative;overflow:hidden;
+    box-shadow:0 4px 20px rgba(124,92,252,.3);margin-bottom:16px;
+  }
+  .login-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 50%);border-radius:var(--radius-xl)}
+  .login-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(124,92,252,.4)}
+  .login-btn:active{transform:scale(.97)}
+  .login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .login-btn .spinner{display:none;align-items:center;justify-content:center;gap:6px}
+  .login-btn.loading .btn-text{display:none}
+  .login-btn.loading .spinner{display:inline-flex}
+  .spinner-dot{width:6px;height:6px;background:#fff;border-radius:50%;animation:spinPulse 1.2s ease-in-out infinite}
+  .spinner-dot:nth-child(2){animation-delay:.15s}
+  .spinner-dot:nth-child(3){animation-delay:.3s}
+  @keyframes spinPulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1.1)}}
+
+  .error-msg{
+    text-align:center;font-size:13px;color:var(--red);min-height:20px;
+    transition:all .3s var(--ease-out);opacity:0;transform:translateY(-4px);
+  }
+  .error-msg.show{opacity:1;transform:translateY(0)}
+
+  .footer{text-align:center;margin-top:20px;font-size:11px;color:var(--text-tertiary);letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="login-card" id="loginCard">
+  <div class="brand-wrap">
+    <div class="brand-ring"></div>
+    <svg class="brand-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="brandGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#a78bfa"/><stop offset="50%" stop-color="#7c5cfc"/><stop offset="100%" stop-color="#c084fc"/></linearGradient><radialGradient id="glow" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#c4b5fd" stop-opacity=".6"/><stop offset="100%" stop-color="#7c5cfc" stop-opacity="0"/></radialGradient></defs>
+      <circle cx="40" cy="40" r="36" fill="url(#brandGrad)" opacity=".15"/>
+      <circle cx="40" cy="40" r="28" stroke="url(#brandGrad)" stroke-width="1.5" fill="none" opacity=".4"/>
+      <path d="M32 28c0-5.5 3.6-10 8-10s8 4.5 8 10" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M28 34c-3 0-6 2.5-6 6s3 6 6 6" stroke="#7c5cfc" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".7"/>
+      <path d="M52 34c3 0 6 2.5 6 6s-3 6-6 6" stroke="#7c5cfc" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".7"/>
+      <path d="M33 48c0 3 3.1 5.5 7 5.5s7-2.5 7-5.5" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M40 36l-2.5-2.5a3 3 0 014.2-4.2L40 31l1.8-1.8a3 3 0 014.2 4.2L40 36z" fill="#ff453a" opacity=".8"/>
+      <circle cx="30" cy="43" r="1.5" fill="#30d158" opacity=".6"/>
+      <circle cx="50" cy="43" r="1.5" fill="#30d158" opacity=".6"/>
+    </svg>
+  </div>
+  <h1 class="login-title">心理学博士卢慧 AI 智能体</h1>
+  <p class="login-subtitle">请输入访问密码</p>
+  <form id="loginForm" onsubmit="handleLogin(event)">
+    <div class="input-group">
+      <input type="password" id="passwordInput" placeholder="请输入密码" autocomplete="current-password" autofocus />
+    </div>
+    <button type="submit" class="login-btn" id="loginBtn">
+      <span class="btn-text">进入</span>
+      <span class="spinner"><span class="spinner-dot"></span><span class="spinner-dot"></span><span class="spinner-dot"></span></span>
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+  </form>
+  <div class="footer">家族系统疗愈 · 口播脚本生产引擎</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// 如果已登录，直接跳转
+if (sessionStorage.getItem(APP_CONFIG.sessionKey) === '1') {
+  window.location.href = APP_CONFIG.mainPage;
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('errorMsg');
+  const card = document.getElementById('loginCard');
+  const pwd = document.getElementById('passwordInput').value;
+
+  if (!pwd) {
+    showError('请输入密码');
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  errEl.classList.remove('show');
+
+  try {
+    const hash = await sha256(pwd);
+    if (hash === APP_CONFIG.passwordHash) {
+      sessionStorage.setItem(APP_CONFIG.sessionKey, '1');
+      window.location.href = APP_CONFIG.mainPage;
+    } else {
+      showError('密码错误，请重试');
+      card.classList.remove('shake');
+      void card.offsetWidth; // reflow
+      card.classList.add('shake');
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordInput').focus();
+    }
+  } catch (err) {
+    showError('验证失败，请重试');
+  }
+
+  btn.classList.remove('loading');
+  btn.disabled = false;
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// Enter 键提交
+document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('loginForm').requestSubmit(); }
+});
+</script>
+</body>
+</html>
