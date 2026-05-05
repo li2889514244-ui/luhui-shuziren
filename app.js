@@ -516,14 +516,23 @@ function buildSystemPrompt(topic) {
   const shuffled = nt.oral_markers.slice().sort(function() { return Math.random() - 0.5; });
   techInject += "\n【口语标记词】"+shuffled.slice(0,3).join("、")+"\n\n";
 
-  // ===== 动态注入案例库（含新增辅助字段） =====
+  // ===== 动态注入案例库（精简版：只注入 2 个案例） =====
   let caseLib = "\n\n📦 案例库：\n";
-  const allKeys = Object.keys(CASES_DNA);
   const topicKey = topic ? getDNAKey(topic.name) : null;
   if (topicKey && CASES_DNA[topicKey]) {
     const cases = CASES_DNA[topicKey];
-    caseLib += "\n━━━ 【"+topic.name+"】"+cases.length+"个案例（必选） ━━━\n";
-    cases.forEach(function(c, i) {
+    // 只取 2 个案例（轮询选取，避免重复）
+    const MAX_CASES = 2;
+    if (!lastDNAIdx[topicKey] || lastDNAIdx[topicKey] >= cases.length) lastDNAIdx[topicKey] = 0;
+    const selected = [];
+    for (let ci = 0; ci < MAX_CASES && ci < cases.length; ci++) {
+      const idx = (lastDNAIdx[topicKey] + ci) % cases.length;
+      selected.push(cases[idx]);
+    }
+    lastDNAIdx[topicKey] = (lastDNAIdx[topicKey] + MAX_CASES) % cases.length;
+
+    caseLib += "\n━━━ 【"+topic.name+"】"+selected.length+"个案例 ━━━\n";
+    selected.forEach(function(c, i) {
       const age = String(c.p.a).match(/^\d/) ? c.p.a+'岁' : c.p.a;
       caseLib += "\n【案例"+(i+1)+"】"+c.city+" · "+c.p.g+" · "+age+" · "+c.p.j+"\n";
       caseLib += "症状："+c.sx.join("；")+"\n";
@@ -533,49 +542,24 @@ function buildSystemPrompt(topic) {
       caseLib += "疗愈："+c.ac+"\n";
       caseLib += "结果："+c.rs+"。"+c.rs2+"\n";
 
-      // 注入新增的辅助字段（如果存在）
-      if (c.hook_hint) {
-        caseLib += "钩子提示："+c.hook_hint+"\n";
-      }
-      if (c.sensory && c.sensory.length) {
-        caseLib += "感官细节方向："+c.sensory.join("；")+"\n";
-      }
-      if (c.transitions && c.transitions.length) {
-        caseLib += "过渡提示："+c.transitions.join("；")+"\n";
-      }
+      if (c.hook_hint) caseLib += "钩子提示："+c.hook_hint+"\n";
+      if (c.sensory && c.sensory.length) caseLib += "感官细节方向："+c.sensory.join("；")+"\n";
+      if (c.transitions && c.transitions.length) caseLib += "过渡提示："+c.transitions.join("；")+"\n";
       if (c.emotional_arc && c.emotional_arc.beats) {
         var arcStr = c.emotional_arc.beats.map(function(b) {
           return b.position+":"+b.emotion+"("+b.intensity+")";
         }).join(" → ");
         caseLib += "情绪弧线："+arcStr+"\n";
       }
-      if (c.micro_insights && c.micro_insights.length) {
-        caseLib += "金句方向："+c.micro_insights.join("；")+"\n";
-      }
+      if (c.micro_insights && c.micro_insights.length) caseLib += "金句方向："+c.micro_insights.join("；")+"\n";
     });
   }
-  const otherKeys = allKeys.filter(function(k) { return k !== topicKey; });
-  const refKey = otherKeys[Math.floor(Math.random() * otherKeys.length)];
-  if (CASES_DNA[refKey] && CASES_DNA[refKey].length > 0) {
-    const rc = CASES_DNA[refKey][0];
-    const ra = String(rc.p.a).match(/^\d/) ? rc.p.a+'岁' : rc.p.a;
-    caseLib += "\n━━━ 风格参考 ━━━\n";
-    caseLib += rc.city+" · "+rc.p.g+" · "+ra+" · "+rc.p.j+"\n";
-    caseLib += "症状："+rc.sx.join("；")+"\n";
-    caseLib += "祖先："+rc.an.who+"——"+rc.an.what+"\n";
-  }
+  // 移除"风格参考"案例（节省 tokens，AI 从当前话题案例中学习风格即可）
 
   let phraseBank = "\n📚 语料库：\n\n";
   const phraseKeys = Object.keys(PHRASES);
-  const selKeys = [phraseKeys[0], phraseKeys[3]];
-  if (topic && phraseKeys[1]) selKeys.push(phraseKeys[1]);
-  selKeys.forEach(function(pk) {
-    if (PHRASES[pk]) {
-      phraseBank += "【"+pk+"】\n";
-      PHRASES[pk].forEach(function(p) { phraseBank += "• "+p+"\n"; });
-      phraseBank += "\n";
-    }
-  });
+  // 只选 1 组语料（按话题相关性）
+  const selKeys = [phraseKeys[0]]; // 只用第1组开场库
 
   return "你现在就是卢慧老师本人。你在拍短视频口播。\n\n" +
   narrativeGuide +
@@ -1382,6 +1366,7 @@ function clearChat(){
 let isGenerating = false;
 let lastSentText = '';
 const chatMessages = [];
+const MAX_CONTEXT_MESSAGES = 6; // 只发最近 3 轮对话给 API（每轮=user+assistant）
 
 function quickAsk(text) {
   if (isGenerating) { showToast('⏳ 正在生成中，请稍后再试'); return; }
@@ -1444,11 +1429,14 @@ async function sendMessage() {
   const timeoutId = setTimeout(() => abortCtrl.abort(), 60000);
 
   try {
+    // 滑动窗口：只发最近 N 轮对话，避免 token 无限增长
+    const contextMessages = chatMessages.slice(-MAX_CONTEXT_MESSAGES);
+
     const body = {
       model: model || 'glm-4-flash',
       messages: [
         { role: 'system', content: buildSystemPrompt(topic) },
-        ...chatMessages
+        ...contextMessages
       ],
       temperature: 0.6,
       max_tokens: maxTokens,
@@ -1895,7 +1883,7 @@ function initSwipeToClose(sidebar) {
 
 function copyMsg(el){if(navigator.clipboard)navigator.clipboard.writeText(el.innerText);}
 function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,'<br>');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,'<br>');
 }
 
 // ===== 事件监听器设置 =====
