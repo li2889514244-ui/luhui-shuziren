@@ -496,230 +496,77 @@ function filterTopics(val) { renderWelcomeTopics(val); }
 
 
 
-// ===== 【重写】动态 buildSystemPrompt（Issue #1 #2 #3 修复） =====
+// ===== 【重构】buildSystemPrompt：few-shot 范文注入 =====
 
-function buildSystemPrompt(topic) {
-  const topicHint = topic
-    ? "\n\n当前用户话题："+topic.name+"\n对应原理："+topic.principle+"\n要问的关键问题："+topic.ask+"\n金句链："+(topic.chains||[]).join(" / ")
-    : "";
-  const lengthHint = scriptLength === 'short' ? "📏 目标800-1200字。"
-    : scriptLength === 'long' ? "📏 目标2500-3500字。"
-    : "📏 目标1200-2000字。";
-  const styleHint = scriptStyle === 'nostory'
-    ? "🎭 不含故事版。用金句排比型或观点共鸣型。"
-    : "🎭 含故事版。必须包含：来访者案例+祖先故事+揭示+收尾。";
+// 范文轮询去重状态
+var lastScriptIndices = [];
 
-  const nt = NARRATIVE_TECHNIQUES;
-  const pick = function(arr) { return arr[Math.floor(Math.random() * arr.length)]; };
-
-  // ===== 🎲 随机脚本框架（每次不同结构） =====
-  const frameworks = [
-    {
-      name: "悬念钩手型",
-      structure: "悬念开场 → 案例铺垫 → 祖先追问 → 代际揭示 → 疗愈转折 → 金句收尾",
-      desc: "用强悬念钩住观众，3秒内不给答案。案例用「你知道吗」推进，揭示用「原来是这样」引爆。",
-      ratio: "钩子10% / 案例50% / 揭示25% / 收尾15%"
-    },
-    {
-      name: "痛点共鸣型",
-      structure: "痛点直击 → 共情深化 → 案例对照 → 根源追溯 → 认知颠覆 → 行动指引",
-      desc: "开场直接戳痛点，让观众觉得「说的就是我」。用案例证明不是个例，用根源追溯颠覆认知。",
-      ratio: "痛点15% / 共情15% / 案例40% / 根源20% / 行动10%"
-    },
-    {
-      name: "反常识颠覆型",
-      structure: "反常识观点 → 质疑铺垫 → 案例佐证 → 真相揭示 → 逻辑闭环 → 深度收尾",
-      desc: "开场抛出违反直觉的观点，制造认知冲突。观众因为「不信」而留下来看完。案例就是证据。",
-      ratio: "反常识15% / 质疑10% / 案例45% / 真相20% / 收尾10%"
-    },
-    {
-      name: "故事驱动型",
-      structure: "人物出场 → 细节沉浸 → 冲突升级 → 转折揭示 → 情感爆发 → 余韵收尾",
-      desc: "以一个来访者的故事为主线，像讲故事电影一样展开。重点在沉浸感和情感张力。",
-      ratio: "出场10% / 沉浸35% / 冲突20% / 揭示25% / 收尾10%"
-    },
-    {
-      name: "对话还原型",
-      structure: "场景还原 → 对话推进 → 追问深入 → 沉默时刻 → 真相浮现 → 点到即止",
-      desc: "还原咨询室的真实对话场景，用「他说……我说……」推进。重点在对话的真实感和节奏感。",
-      ratio: "场景10% / 对话50% / 追问20% / 真相15% / 收尾5%"
-    },
-    {
-      name: "层层剥笋型",
-      structure: "表象呈现 → 第一层剥开 → 第二层剥开 → 核心真相 → 全局视角 → 升华收尾",
-      desc: "像剥洋葱一样层层深入，每剥一层都给观众一个「原来如此」。适合复杂家族故事。",
-      ratio: "表象10% / 第一层25% / 第二层25% / 核心25% / 收尾15%"
-    }
-  ];
-  const framework = pick(frameworks);
-
-  // ===== 🎭 随机叙事风格（每次不同语气） =====
-  const narrativeStyles = [
-    { name: "温和共情型", desc: "语气温和，像朋友聊天。多用「你有没有想过」「其实很多时候」。情感共鸣优先。" },
-    { name: "犀利点醒型", desc: "语气直接，一针见血。多用「你醒醒吧」「别再骗自己了」。冲击力优先。" },
-    { name: "平静叙述型", desc: "语气平静克制，用事实说话。不煽情，但细节足够震撼。真实感优先。" },
-    { name: "情绪起伏型", desc: "情绪有高低起伏，从平静到激动再到平静。像坐过山车。节奏感优先。" },
-    { name: "碎碎念型", desc: "口语化极强，句子碎短断。像邻居大姐在跟你唠嗑。亲切感优先。" }
-  ];
-  const narStyle = pick(narrativeStyles);
-
-  // ===== 📐 叙事技法指引（动态组合） =====
-  var narrativeGuide = "\n🎬 叙事技法要求：\n\n" +
-  "【本次框架】" + framework.name + "\n" +
-  "结构：" + framework.structure + "\n" +
-  "要领：" + framework.desc + "\n" +
-  "篇幅分配：" + framework.ratio + "\n\n" +
-  "【本次语气】" + narStyle.name + "\n" +
-  narStyle.desc + "\n\n" +
-  "【过渡】案例段落之间必须有自然过渡，不能硬切。随机使用以下方式之一：\n" +
-  "- 追问式（\"后来我问他的XX\"、\"我一问才知道\"、\"我继续追\"）\n" +
-  "- 递进对话（\"XX呢？{回答}。那再上一代呢？\"）\n" +
-  "- 揭示句（\"原来是这样\"、\"你看到了吗\"、\"我就明白了\"）\n" +
-  "- 沉默留白（\"他沉默了很久\"、\"眼眶红了\"、\"半天没说话\"）\n" +
-  "⚠️ 禁止每次都用同一句过渡，必须轮换。\n\n" +
-  "【感官细节】每个场景必须有1-2个感官细节（视觉/听觉/触觉），让观众\"看到\"画面。\n" +
-  "- 不说\"他很难受\"，说\"牙齿都是洞，甜就好\"\n" +
-  "- 不说\"家里气氛差\"，说\"饭桌上筷子不敢响\"\n" +
-  "- 不说\"她很痛苦\"，说\"眼泪掉下来但一声不吭\"\n\n" +
-  "【碎句技法】关键冲击画面用碎句，模拟真实说话：\n" +
-  "- \"牙齿都是洞，甜就好\"\n" +
-  "- \"一个浪过来，妹妹就没了\"\n" +
-  "- \"安眠药一把一把吃，给小孩儿都吃着\"\n\n";
-
-  // ===== 📚 随机叙事技法注入 =====
-  var techInject = "📚 叙事技法参考（随机选取）：\n\n";
-
-  // 随机选1-2个过渡模板
-  var transTypes = Object.keys(nt.transitions);
-  var selTransType = pick(transTypes);
-  techInject += "【过渡模板·"+selTransType+"】\n";
-  nt.transitions[selTransType].forEach(function(t) { techInject += "• "+t+"\n"; });
-
-  // 随机选1个感官模板
-  var sensoryTypes = Object.keys(nt.sensory);
-  var selSensoryType = pick(sensoryTypes);
-  techInject += "\n【感官模板·"+selSensoryType+"】\n";
-  nt.sensory[selSensoryType].forEach(function(s) { techInject += "• "+s+"\n"; });
-
-  // 随机选2个钩子模板
-  techInject += "\n【开头钩子参考·仅供风格学习】\n";
-  for (var hi = 0; hi < 2; hi++) { techInject += "• "+pick(nt.hooks)+"\n"; }
-  techInject += "⚠️ 以上仅供学习风格和节奏，禁止照抄原文，必须自己写一个全新的原创开场。\n";
-
-  // 随机选1个结尾模板
-  techInject += "\n【结尾收束参考·仅供风格学习】\n• "+pick(nt.endings)+"\n";
-  techInject += "⚠️ 以上仅供学习风格和语气，禁止照抄原文，必须自己写一个全新的原创收尾。\n";
-
-  // 随机选3个口语标记词
-  var shuffled = nt.oral_markers.slice().sort(function() { return Math.random() - 0.5; });
-  techInject += "\n【口语标记词】"+shuffled.slice(0,3).join("、")+"\n\n";
-
-  // ===== 📦 动态注入案例库（3-4个案例，轮询） =====
-  var caseLib = "\n\n📦 案例库：\n";
-  var topicKey = topic ? getDNAKey(topic.name) : null;
-  if (topicKey && CASES_DNA[topicKey]) {
-    var cases = CASES_DNA[topicKey];
-    var MAX_CASES = Math.min(4, cases.length); // 最多4个，但不超过总数
-    if (MAX_CASES < 3) MAX_CASES = Math.min(3, cases.length); // 至少3个
-    if (!lastDNAIdx[topicKey] || lastDNAIdx[topicKey] >= cases.length) lastDNAIdx[topicKey] = 0;
-    var selected = [];
-    for (var ci = 0; ci < MAX_CASES && ci < cases.length; ci++) {
-      var idx = (lastDNAIdx[topicKey] + ci) % cases.length;
-      selected.push(cases[idx]);
-    }
-    lastDNAIdx[topicKey] = (lastDNAIdx[topicKey] + MAX_CASES) % cases.length;
-
-    caseLib += "\n━━━ 【"+topic.name+"】"+selected.length+"个案例 ━━━\n";
-    selected.forEach(function(c, i) {
-      var age = String(c.p.a).match(/^\d/) ? c.p.a+'岁' : c.p.a;
-      caseLib += "\n【案例"+(i+1)+"】"+c.city+" · "+c.p.g+" · "+age+" · "+c.p.j+"\n";
-      caseLib += "症状："+c.sx.join("；")+"\n";
-      caseLib += "祖先："+c.an.who+"——"+c.an.what+"（"+c.an.emo+"）\n";
-      caseLib += "代际链条："+c.tr+"\n";
-      caseLib += "揭示："+c.rv+"\n";
-      caseLib += "疗愈："+c.ac+"\n";
-      caseLib += "结果："+c.rs+"。"+c.rs2+"\n";
-
-      if (c.hook_hint) caseLib += "钩子提示："+c.hook_hint+"\n";
-      if (c.sensory && c.sensory.length) caseLib += "感官细节方向："+c.sensory.join("；")+"\n";
-      if (c.transitions && c.transitions.length) caseLib += "过渡提示："+c.transitions.join("；")+"\n";
-      if (c.emotional_arc && c.emotional_arc.beats) {
-        var arcStr = c.emotional_arc.beats.map(function(b) {
-          return b.position+":"+b.emotion+"("+b.intensity+")";
-        }).join(" → ");
-        caseLib += "情绪弧线："+arcStr+"\n";
-      }
-      if (c.micro_insights && c.micro_insights.length) caseLib += "金句方向："+c.micro_insights.join("；")+"\n";
-    });
+// 从 SCRIPTS 数组中随机选 N 篇（带去重）
+function selectRandomScripts(n) {
+  var available = SCRIPTS.map(function(s, i) { return i; })
+    .filter(function(i) { return lastScriptIndices.indexOf(i) === -1; });
+  if (available.length < n) {
+    available = SCRIPTS.map(function(s, i) { return i; });
   }
+  var shuffled = available.sort(function() { return Math.random() - 0.5; });
+  var selected = shuffled.slice(0, n);
+  lastScriptIndices = selected;
+  return selected.map(function(i) { return SCRIPTS[i].content; });
+}
 
-  // ===== 🎨 随机风格示例（每次只注入1个，而非全部3个） =====
-  var styleKeys = Object.keys(STYLE_EXAMPLES);
-  var selStyleKey = pick(styleKeys);
-  var styleNames = { jujube: "金句排比型", story: "案例故事型", resonance: "观点共鸣型" };
-  var styleExampleInject = "\n【本次参考风格·" + (styleNames[selStyleKey]||selStyleKey) + "】\n" +
-    STYLE_EXAMPLES[selStyleKey] + "\n" +
-    "⚠️ 以上仅供学习风格和节奏，禁止照抄，必须原创。\n";
-
-  // ===== 📝 随机语料注入（每次随机选1-2组） =====
-  var phraseBank = "\n📚 语料库：\n\n";
-  var phraseKeys = Object.keys(PHRASES);
-  var shuffledPhraseKeys = phraseKeys.slice().sort(function() { return Math.random() - 0.5; });
-  var selPhraseKeys = shuffledPhraseKeys.slice(0, 2);
-  selPhraseKeys.forEach(function(key) {
-    phraseBank += "【" + key + "】\n";
-    var items = PHRASES[key];
-    var shuffledItems = items.slice().sort(function() { return Math.random() - 0.5; });
-    shuffledItems.slice(0, 5).forEach(function(item) { phraseBank += "• " + item + "\n"; });
-    phraseBank += "\n";
+// 检测用户输入是否包含完整案例信息
+function detectUserCase(text) {
+  var caseIndicators = ['案主', '核心现象', '影响力事件', '时间线', '创伤', '纠缠', '家族', '代际', '核心纠缠', '来访者'];
+  var score = 0;
+  caseIndicators.forEach(function(word) {
+    if (text.indexOf(word) !== -1) score++;
   });
+  return score >= 3 ? text : null;
+}
 
-  // ===== 🚨 动态指令集（从指令池随机选 + 核心指令常驻） =====
-  var coreRules = [
-    "整个输出是一整块连续文字，中间不能有空行",
-    "口语碎碎念，句子碎短断。高频使用：然后呢、你看看、你知道吗、结果呢",
-    "收尾说一句就停，不要画蛇添足",
-    "每200字至少3个呼吸点（短句、停顿、反问）"
-  ];
-  var extraRules = [
-    "不用「什么是XX」开场，从「制造好奇缺口」或「痛点直击」开始",
-    "祖先故事必须「铺垫→展开→揭示」三步走，不能一步到位",
-    "细节密度拉满，每个场景3-5句话，必须有感官细节",
-    "「揭示就在这儿」这种揭示句式整篇只能用一次，其他揭示必须换不同说法",
-    "「那再上一代呢」这种追问句式每个案例最多用一次，其他追问换不同问法",
-    "每篇脚本的开场、收尾、过渡句式必须跟上次不同",
-    "禁止用排比整齐的句式，要参差不齐、口语化",
-    "禁止说教和替观众总结，让观众自己悟",
-    "禁止连续三句以上的总结性发言",
-    "禁止使用学术术语，全部用大白话",
-    "金句必须扎心，不能是鸡汤",
-    "案例中的人物要有名字或代号，不要总说「有一个人」",
-    "对话还原要真实，不要书面化",
-    "情绪转折要有铺垫，不能突然变脸",
-    "开场3秒内必须制造好奇或共鸣，否则观众划走"
-  ];
-  // 核心指令常驻，额外指令随机选5-7条
-  var shuffledExtra = extraRules.slice().sort(function() { return Math.random() - 0.5; });
-  var selectedExtra = shuffledExtra.slice(0, 5 + Math.floor(Math.random() * 3));
-  var allRules = coreRules.concat(selectedExtra);
-  var rulesText = "🚨 核心规则：\n";
-  allRules.forEach(function(r, i) { rulesText += (i+1) + ". " + r + "。\n"; });
+function buildSystemPrompt(topic, userCaseInfo) {
+  // 1. 字数和风格提示
+  var lengthHint = scriptLength === 'short' ? "目标800-1200字。"
+    : scriptLength === 'long' ? "目标2500-3500字。"
+    : "目标1200-2000字。";
+  var styleHint = scriptStyle === 'nostory'
+    ? "不含故事版。用金句排比型或观点共鸣型。"
+    : "含故事版。必须包含：来访者案例+祖先故事+揭示+收尾。";
 
-  // ===== ⏰ 随机扰动（时间戳 + 随机种子） =====
-  var seed = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  // 2. 话题提示
+  var topicHint = topic
+    ? "\n\n当前用户话题：" + topic.name
+      + "\n对应原理：" + topic.principle
+      + "\n要问的关键问题：" + topic.ask
+      + "\n金句链：" + (topic.chains || []).join(" / ")
+    : "";
 
-  // ===== 🎯 最终组装 =====
-  return "你现在就是卢慧老师本人。你在拍短视频口播。这是第 " + seed + " 次生成，必须与之前的任何一次都不同。\n\n" +
-  narrativeGuide +
-  techInject +
-  rulesText + "\n" +
-  "🎯 篇幅分配：" + framework.ratio + "\n\n" +
-  "🎬 口播脚本，用嘴说不是用笔写。像跟朋友聊天一样自然。\n\n" +
-  styleExampleInject + "\n" +
-  "🗣️ 句子碎短断；口语标记高频；同一意思换着说；第一人称。\n\n" +
-  "⚠️ 严禁：排比整齐 / 说教 / 替观众总结 / 连续三句总结 / 学术术语 / 照搬模板\n\n" +
-  caseLib + "\n" + phraseBank + "\n" +
-  lengthHint + "\n" + styleHint + "\n" + topicHint;
+  // 3. 随机选 2 篇完整范文（代码层随机，不靠文字约束）
+  var selectedScripts = selectRandomScripts(2);
+
+  // 4. 用户案例信息
+  var userCaseSection = userCaseInfo
+    ? "\n\n请根据以下案例信息生成口播脚本：\n\n" + userCaseInfo
+    : "";
+
+  // 5. 组装 system prompt
+  return [
+    "你现在就是卢慧老师本人。你在拍短视频口播。以下是2篇你之前讲过的脚本，作为风格参考。请学习其中的叙事节奏、开场方式、案例讲述方式、揭示手法、收尾风格，然后根据用户提供的案例信息，生成一篇全新的口播脚本。",
+    "",
+    "━━━ 范文参考 ━━━",
+    "",
+    selectedScripts[0],
+    "",
+    selectedScripts[1],
+    "",
+    "━━━ 本次任务 ━━━",
+    "",
+    userCaseSection,
+    "",
+    lengthHint,
+    styleHint,
+    topicHint
+  ].join("\n");
 }
 
 
@@ -1568,10 +1415,11 @@ async function sendMessage() {
     // 滑动窗口：只发最近 N 轮对话，避免 token 无限增长
     const contextMessages = chatMessages.slice(-MAX_CONTEXT_MESSAGES);
 
+    const userCaseInfo = detectUserCase(text);
     const body = {
       model: model || 'glm-4-flash',
       messages: [
-        { role: 'system', content: buildSystemPrompt(topic) },
+        { role: 'system', content: buildSystemPrompt(topic, userCaseInfo) },
         ...contextMessages
       ],
       temperature: 0.88,
